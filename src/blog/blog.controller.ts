@@ -1,48 +1,53 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { BlogDto } from './dtos/blog.dto';
+import { BlogService } from './blog.service';
 
 @ApiTags('Blog')
 @Controller('blog')
 export class BlogController {
+    constructor(
+        private readonly blogService: BlogService
+    ){}
+
+
     //get all blogs
     @Get()
     findAll(@Query() queryParams ){
-        return "find All"
+        return this.blogService.findAll()
     }
 
     //create blog
     @Post()
     create(@Body() body:BlogDto){
-        console.log(body);
-        
-        return "create a blog"
+        //
+        return this.blogService.creat(body)
+    
     }
 
     //get all categories
-    @Get('category')
-    findAllCategories(){
-        return "find All Categories"
-    }
+    // @Get('category')
+    // findAllCategories(){
+    //     return "find All Categories"
+    // }
 
     //dynamic rout with id
     @Get(':id')
     findOne(@Param("id") id:string){
-        return `find One blog with id : ${id}` 
+        return this.blogService.findOne(id)
     }
 
     //update blog
     @Put(':id')
     update(@Param('id') id:string , @Body() body:BlogDto ){
-        console.log(id);
-        console.log(body);
-        return "update blog"
+        // 
+        return this.blogService.update(id,body)
     }
 
     //delete blog
     @Delete(':id')
     delete(@Param('id') id:string){
-        console.log(id);
-        return `delete blog `
+        //
+        return this.blogService.delete(id)
     }
 }
