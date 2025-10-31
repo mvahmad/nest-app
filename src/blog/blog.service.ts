@@ -13,7 +13,7 @@ export class BlogService {
     @InjectModel(Blog.name) private readonly blogModel: Model<Blog>,
   ) {}
 
-  async findAll(queryParams: BlogQueryDto) {
+  async findAll(queryParams: BlogQueryDto , selectObject:any = {__v:0}) {
     const { limit = 5, page = 1, title, sort } = queryParams;
     
     const filter = title ? { title: new RegExp(title, 'i') } : {};
@@ -25,6 +25,7 @@ export class BlogService {
       .find(filter)
       .skip((page - 1) * limit)
       .sort(sortobj)
+      .select(selectObject) // Exclude __v field
       .limit(limit)
       .lean() // ✅ convert to plain JS objects
       .exec();
@@ -34,8 +35,12 @@ export class BlogService {
     return { blogs, count };
   }
 
-  async findOne(id: string) {
-    const blog = await this.blogModel.findById(id).lean().exec(); // ✅ .lean()
+  async findOne(id: string,selectObject:any = {__v:0}) {
+    const blog = await this.blogModel
+        .findOne({_id:id})
+        .select(selectObject)
+        .lean()
+        .exec(); // ✅ .lean()
     if (!blog) {
       throw new NotFoundException('Blog not found');
     }
