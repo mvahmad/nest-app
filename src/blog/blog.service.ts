@@ -5,6 +5,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Blog } from './schemas/blog.schema';
 import { Model } from 'mongoose';
 import { BlogQueryDto } from './dtos/blog-query.dto';
+import { sortFunction } from 'src/shared/utils/sort-utils';
 
 @Injectable()
 export class BlogService {
@@ -13,13 +14,17 @@ export class BlogService {
   ) {}
 
   async findAll(queryParams: BlogQueryDto) {
-    const { limit = 5, page = 1, title } = queryParams;
+    const { limit = 5, page = 1, title, sort } = queryParams;
     
     const filter = title ? { title: new RegExp(title, 'i') } : {};
+
+    const sortobj = sort ? sortFunction(sort) : {}
+   
 
     const blogs = await this.blogModel
       .find(filter)
       .skip((page - 1) * limit)
+      .sort(sortobj)
       .limit(limit)
       .lean() // ✅ convert to plain JS objects
       .exec();
