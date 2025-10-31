@@ -2,6 +2,7 @@ import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/
 import { ApiTags } from '@nestjs/swagger';
 import { BlogDto } from './dtos/blog.dto';
 import { BlogService } from './blog.service';
+import { BlogQueryDto } from './dtos/blog-query.dto';
 
 @ApiTags('Blog')
 @Controller('blog')
@@ -13,15 +14,15 @@ export class BlogController {
 
     //get all blogs
     @Get()
-    findAll(@Query() queryParams ){
-        return this.blogService.findAll()
+    findAll(@Query() queryParams:BlogQueryDto ){
+        return this.blogService.findAll(queryParams)
     }
 
     //create blog
     @Post()
     create(@Body() body:BlogDto){
         //
-        return this.blogService.creat(body)
+        return this.blogService.create(body)
     
     }
 

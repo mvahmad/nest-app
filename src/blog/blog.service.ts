@@ -4,44 +4,60 @@ import { BlogDto } from './dtos/blog.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Blog } from './schemas/blog.schema';
 import { Model } from 'mongoose';
+import { BlogQueryDto } from './dtos/blog-query.dto';
 
 @Injectable()
 export class BlogService {
-    constructor(
-        //inject blog model to service
-        @InjectModel(Blog.name) private readonly blogModel : Model<Blog>  
-    ){}
+  constructor(
+    @InjectModel(Blog.name) private readonly blogModel: Model<Blog>,
+  ) {}
 
-    async findAll(){
-        return await this.blogModel.find().exec();
+  async findAll(queryParams: BlogQueryDto) {
+    const { limit = 5, page = 1, title } = queryParams;
+    
+    const filter = title ? { title: new RegExp(title, 'i') } : {};
+
+    const blogs = await this.blogModel
+      .find(filter)
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean() // ✅ convert to plain JS objects
+      .exec();
+
+    const count = await this.blogModel.countDocuments(filter);
+
+    return { blogs, count };
+  }
+
+  async findOne(id: string) {
+    const blog = await this.blogModel.findById(id).lean().exec(); // ✅ .lean()
+    if (!blog) {
+      throw new NotFoundException('Blog not found');
     }
+    return blog;
+  }
 
-    async findOne(id:string){
-        const blog = await this.blogModel.findOne({_id:id}).exec();
-        if(!blog){
-            throw new NotFoundException()
-        }else{
-            return blog;
-        }
+  async create(body: BlogDto) {
+    const newBlog = new this.blogModel(body);
+    const saved = await newBlog.save();
+    return saved.toObject(); // ✅ convert before returning
+  }
+
+  async update(id: string, body: BlogDto) {
+    const updated = await this.blogModel
+      .findByIdAndUpdate(id, body, { new: true, lean: true }) // ✅ lean
+      .exec();
+    if (!updated) {
+      throw new NotFoundException('Blog not found');
     }
+    return updated;
+  }
 
-    async creat(body:BlogDto){
-        const newBlog =new this.blogModel(body)
-        await newBlog.save();
-        return newBlog
+  async delete(id: string) {
+    const deleted = await this.blogModel.findByIdAndDelete(id).lean().exec();
+    if (!deleted) {
+      throw new NotFoundException('Blog not found');
     }
-
-    async update(id:string , body:BlogDto){
-        const blog = await this.findOne(id);
-        blog.title = body.title;
-        blog.content = body.content;
-        await blog.save();
-        return blog;
-
-    }
-
-    async delete(id:string){
-        const blog =await this.findOne(id);
-        await blog.deleteOne()
-    }
+    return deleted;
+  }
 }
