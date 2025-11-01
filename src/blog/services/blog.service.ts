@@ -1,10 +1,10 @@
 //conect to  database  for blog related operations
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { BlogDto } from './dtos/blog.dto';
+import { BlogDto } from '../dtos/blog.dto';
 import { InjectModel } from '@nestjs/mongoose';
-import { Blog } from './schemas/blog.schema';
+import { Blog } from '../schemas/blog.schema';
 import { Model } from 'mongoose';
-import { BlogQueryDto } from './dtos/blog-query.dto';
+import { BlogQueryDto } from '../dtos/blog-query.dto';
 import { sortFunction } from 'src/shared/utils/sort-utils';
 
 @Injectable()
@@ -23,6 +23,7 @@ export class BlogService {
 
     const blogs = await this.blogModel
       .find(filter)
+      .populate("category",{title:1})
       .skip((page - 1) * limit)
       .sort(sortobj)
       .select(selectObject) // Exclude __v field
@@ -38,6 +39,7 @@ export class BlogService {
   async findOne(id: string,selectObject:any = {__v:0}) {
     const blog = await this.blogModel
         .findOne({_id:id})
+        .populate("category",{title:1})
         .select(selectObject)
         .lean()
         .exec(); // ✅ .lean()
@@ -50,17 +52,13 @@ export class BlogService {
   async create(body: BlogDto) {
     const newBlog = new this.blogModel(body);
     const saved = await newBlog.save();
-    return saved.toObject(); // ✅ convert before returning
+    return saved.toObject(); 
   }
 
   async update(id: string, body: BlogDto) {
-    const updated = await this.blogModel
-      .findByIdAndUpdate(id, body, { new: true, lean: true }) // ✅ lean
-      .exec();
-    if (!updated) {
-      throw new NotFoundException('Blog not found');
-    }
-    return updated;
+    return await this.blogModel.findByIdAndUpdate(id,body,{
+      new:true
+    })
   }
 
   async delete(id: string) {
