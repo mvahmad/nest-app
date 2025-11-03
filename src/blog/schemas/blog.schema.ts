@@ -8,6 +8,8 @@ export class Blog extends Document {
     title:string;
     @Prop()
     content:string;
+    @Prop()
+    image:string;
     
     @Prop({
         type:Types.ObjectId,
