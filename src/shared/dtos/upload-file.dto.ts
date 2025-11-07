@@ -2,6 +2,12 @@ import { ApiProperty } from "@nestjs/swagger";
 import { IsOptional } from "class-validator";
 
 export class UploadFileDto {
+
+  @IsOptional()
+  height?:number;
+
+  @IsOptional()
+  width?:number;
  
   @IsOptional()
   @ApiProperty({
@@ -17,4 +23,6 @@ export class UploadFileDto {
     required: true,
   })
   file: any;
+
+
 }
