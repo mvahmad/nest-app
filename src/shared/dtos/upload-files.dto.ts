@@ -22,5 +22,5 @@ export class UploadFilesDto {
       type: 'string',
       required: true,
      })
-      folder: string;
+      folder?: string;
 }

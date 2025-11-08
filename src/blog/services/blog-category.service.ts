@@ -6,6 +6,7 @@ import { Model } from 'mongoose';
 import { sortFunction } from 'src/shared/utils/sort-utils';
 import { BlogCategory } from '../schemas/blog-category.schema';
 import { BlogCategoryQueryDto } from '../dtos/blog-category-query.dto';
+import { deleteImage } from 'src/shared/utils/file-utils';
 
 @Injectable()
 export class BlogCategoryService {
@@ -55,7 +56,20 @@ export class BlogCategoryService {
   }
 
   async update(id: string, body: BlogCategoryDto) {
-    const updated = await this.categoryModel
+    const blogCategory = await this.categoryModel.findById(id).select('_id image').exec();
+
+       if (!blogCategory) {
+        throw new NotFoundException('Blog not found');
+      }
+
+      if (blogCategory.image !== body.image ){
+      try {
+      await deleteImage(blogCategory.image, 'blog');
+    } catch (error) {
+      console.error('❌ Failed to delete image files:', error);
+    }
+    }  
+     const updated = await this.categoryModel
       .findByIdAndUpdate(id, body, { new: true, lean: true }) 
       .exec();
     if (!updated) {
@@ -65,10 +79,18 @@ export class BlogCategoryService {
   }
 
   async delete(id: string) {
-    const deleted = await this.categoryModel.findByIdAndDelete(id).lean().exec();
-    if (!deleted) {
-      throw new NotFoundException('Blog not found');
-    }
-    return deleted;
+     const blogCategory = await this.categoryModel.findById(id).select('_id image').exec();
+      if (!blogCategory) {
+        throw new NotFoundException('Blog not found');
+      }
+       if (blogCategory.image) {
+        try {
+          await deleteImage(blogCategory.image, 'blog');
+        } catch (error) {
+          console.error('❌ Failed to delete image files:', error);
+        }
+      }
+  await blogCategory.deleteOne();
+  return { message: 'category deleted successfully', id };
   }
 }

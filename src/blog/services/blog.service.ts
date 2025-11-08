@@ -6,6 +6,7 @@ import { Blog } from '../schemas/blog.schema';
 import { Model } from 'mongoose';
 import { BlogQueryDto } from '../dtos/blog-query.dto';
 import { sortFunction } from 'src/shared/utils/sort-utils';
+import { deleteImage } from 'src/shared/utils/file-utils';
 
 @Injectable()
 export class BlogService {
@@ -56,16 +57,37 @@ export class BlogService {
   }
 
   async update(id: string, body: BlogDto) {
+    const blog = await this.blogModel.findById(id).select('_id image').exec();
+    if (!blog) {
+    throw new NotFoundException('Blog not found');
+  }
+    if (blog.image !== body.image ){
+      try {
+      await deleteImage(blog.image, 'blog');
+    } catch (error) {
+      console.error('❌ Failed to delete image files:', error);
+    }
+    }
     return await this.blogModel.findByIdAndUpdate(id,body,{
       new:true
     })
+ 
   }
 
   async delete(id: string) {
-    const deleted = await this.blogModel.findByIdAndDelete(id).lean().exec();
-    if (!deleted) {
-      throw new NotFoundException('Blog not found');
+  const blog = await this.blogModel.findById(id).select('_id image').exec();
+  if (!blog) {
+    throw new NotFoundException('Blog not found');
+  }
+   if (blog.image) {
+    try {
+      await deleteImage(blog.image, 'blog');
+    } catch (error) {
+      console.error('❌ Failed to delete image files:', error);
     }
-    return deleted;
+  }
+  await blog.deleteOne();
+  return { message: 'Blog deleted successfully', id };
   }
 }
+
