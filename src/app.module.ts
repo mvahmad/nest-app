@@ -9,9 +9,14 @@ import { join } from 'path';
 import { APP_FILTER } from '@nestjs/core';
 import { LogFilter } from './shared/filters/log.filter';
 import { Log, LogSchema } from './shared/schemas/log.schema';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal:true,
+      envFilePath:'.env'
+    }),
     BlogModule,
     MongooseModule.forRoot("mongodb://localhost:27017/nest-app"),
     ServeStaticModule.forRoot({
